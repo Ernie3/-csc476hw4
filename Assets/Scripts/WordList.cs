@@ -27,6 +27,18 @@ public class WordList : MonoBehaviour
         S = this;
     }
 
+    public void Init()
+    {
+        lines = wordListText.text.Split('\n');
+        totalLines = lines.Length;
+        StartCoroutine(ParseLines());
+    }
+
+    public static void INIT()
+    {
+        S.Init();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -69,6 +81,8 @@ public class WordList : MonoBehaviour
 
         longWordCount = longWords.Count;
         wordCount = words.Count;
+
+        gameObject.SendMessage("WordListParseComplete");
     }
 
     public static List<string> GET_WORDS()
