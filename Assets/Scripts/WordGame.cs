@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum GameMode
 {
@@ -19,6 +20,10 @@ public class WordGame : MonoBehaviour
 
     [Header("Set in Inspector")]
     public GameObject prefabLetter;
+    public Text levelText;
+    public Text nextLevelText;
+    public Text highScoreText;
+    public Text timerText;
     public Rect wordArea = new Rect(-24, 19, 48, 28);
     public float letterSize = 1.5f;
     public bool showAllWyrds = true;
@@ -31,13 +36,20 @@ public class WordGame : MonoBehaviour
     [Header("Set Dynamically")]
     public GameMode mode = GameMode.preGame;
     public WordLevel currLevel;
+    public int levelNumber;
     public List<Wyrd> wyrds;
     public List<Letter> bigLetters;
     public List<Letter> bigLettersActive;
     public string testWord;
-    private string upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    public static int Level => S.levelNumber;
+    public static string HighScorePointsKey => "HighScorePoints";
+    public static string HighScoreRoundsKey => "HighScoreRounds";
+
+    private const string upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private Transform letterAnchor, bigLetterAnchor;
+    private List<GameObject> goLetters = new List<GameObject>(), goBigLetters = new List<GameObject>();
 
     void Awake()
     {
@@ -137,6 +149,7 @@ public class WordGame : MonoBehaviour
     {
         string subWord;
         var foundTestWord = false;
+        var gotTargetWord = testWord == currLevel.word;
 
         // create a List<int> to hold the indicies of other subWords that are
         // contained within testWord
@@ -174,6 +187,11 @@ public class WordGame : MonoBehaviour
         }
 
         ClearBigLettersActive();
+
+        if (gotTargetWord)
+        {
+            Invoke(nameof(NextLevel), 4f);
+        }
     }
 
     void HighlightWyrd(int ndx)
@@ -199,22 +217,29 @@ public class WordGame : MonoBehaviour
     public void WordListParseComplete()
     {
         mode = GameMode.makeLevel;
-        currLevel = MakeWordLevel();
+        currLevel = MakeWordLevel(1);
+        Invoke(nameof(HideHighScoreText), 3f);
     }
 
-    public WordLevel MakeWordLevel(int levelNum = -1)
+    public void NextLevel()
     {
-        var level = new WordLevel();
-        if(levelNum == -1)
-        {
-            level.longWordIndex = Random.Range(0, WordList.LONG_WORD_COUNT);
-        }
-        else
-        {
-            // TODO: this case
-        }
+        mode = GameMode.makeLevel;
+        nextLevelText.gameObject.SetActive(true);
+        ClearLevel();
+        currLevel = MakeWordLevel(++levelNumber);
+        Invoke(nameof(HideNextLevelText), 3f);
+    }
 
-        level.levelNum = levelNum;
+    public WordLevel MakeWordLevel(int levelNum)
+    {
+        levelNumber = levelNum;
+        levelText.text = "Level " + levelNum;
+
+        var level = new WordLevel
+        {
+            longWordIndex = Random.Range(0, WordList.LONG_WORD_COUNT),
+            levelNum = levelNum
+        };
         level.word = WordList.GET_LONG_WORD(level.longWordIndex);
         level.charDict = WordLevel.MakeCharDict(level.word);
 
@@ -304,6 +329,7 @@ public class WordGame : MonoBehaviour
                 go.transform.localScale = Vector3.one * letterSize;
 
                 wyrd.Add(lett);
+                goLetters.Add(go);
             }
 
             if (showAllWyrds)
@@ -342,6 +368,7 @@ public class WordGame : MonoBehaviour
             lett.visible = true; // always true for big letters
             lett.big = true;
             bigLetters.Add(lett);
+            goBigLetters.Add(go);
         }
 
         bigLetters = ShuffleLetters(bigLetters);
@@ -382,5 +409,23 @@ public class WordGame : MonoBehaviour
             pos.y += bigLetterSize * 1.25f;
             bigLettersActive[i].pos = pos;
         }
+    }
+
+    private void ClearLevel()
+    {
+        goLetters.ForEach(go => Destroy(go));
+        goBigLetters.ForEach(go => Destroy(go));
+        goLetters.Clear();
+        goBigLetters.Clear();
+    }
+
+    private void HideNextLevelText()
+    {
+        nextLevelText.gameObject.SetActive(false);
+    }
+
+    private void HideHighScoreText()
+    {
+        highScoreText.gameObject.SetActive(false);
     }
 }

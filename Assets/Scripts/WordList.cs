@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -32,6 +33,18 @@ public class WordList : MonoBehaviour
         lines = wordListText.text.Split('\n');
         totalLines = lines.Length;
         StartCoroutine(ParseLines());
+
+        if(PlayerPrefs.HasKey(WordGame.HighScorePointsKey) && PlayerPrefs.HasKey(WordGame.HighScoreRoundsKey))
+        {
+            WordGame.S.highScoreText.text = "Current High Score: " + Environment.NewLine;
+            WordGame.S.highScoreText.text += PlayerPrefs.GetInt(WordGame.HighScorePointsKey) + " points in " + PlayerPrefs.GetInt(WordGame.HighScoreRoundsKey) + " rounds";
+            WordGame.S.highScoreText.gameObject.SetActive(true);
+        }
+        else
+        {
+            WordGame.S.highScoreText.text = "No high score set yet!";
+            WordGame.S.highScoreText.gameObject.SetActive(true);
+        }
     }
 
     public static void INIT()

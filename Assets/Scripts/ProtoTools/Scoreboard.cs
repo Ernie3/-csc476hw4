@@ -15,6 +15,8 @@ public class Scoreboard : MonoBehaviour {
     [SerializeField] private int    _score = 0;
     [SerializeField] private string _scoreString;
 
+    public static int Score => S.score;
+
     private Transform       canvasTrans;
 
     // The score property also sets the scoreString
