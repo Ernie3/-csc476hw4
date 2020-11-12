@@ -39,7 +39,7 @@ public class Wyrd
         {
             foreach (var l in letters)
             {
-                l.color = color;
+                l.color = value;
             }
         }
     }
