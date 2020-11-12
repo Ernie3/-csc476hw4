@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
+using UnityEditor;
 using UnityEngine;
 
 public enum GameMode
@@ -24,6 +24,7 @@ public class WordGame : MonoBehaviour
     public bool showAllWyrds = true;
     public float bigLetterSize = 4f;
     public Color bigColorDim = new Color(0.8f, 0.8f, 0.8f);
+    public Color bigColorSelected = new Color(1f, 1f, 1f);
     public Vector3 bigLetterCenter = new Vector3(0, -16, 0);
 
     [Header("Set Dynamically")]
@@ -32,6 +33,8 @@ public class WordGame : MonoBehaviour
     public List<Wyrd> wyrds;
     public List<Letter> bigLetters;
     public List<Letter> bigLettersActive;
+    public string testWord;
+    private string upperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private Transform letterAnchor, bigLetterAnchor;
 
@@ -52,7 +55,142 @@ public class WordGame : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        Letter ltr;
+        char c;
+        switch(mode)
+        {
+            case GameMode.inLevel:
+                foreach (var cIt in Input.inputString)
+                {
+                    c = char.ToUpperInvariant(cIt);
+                    // check to see if c is an upper case letter
+                    if(upperCase.Contains(c))
+                    {
+                        // find available Letter in bigLetters with c
+                        ltr = FindNextLetterByChar(c);
+                        // if a Letter was returned
+                        if(ltr != null)
+                        {
+                            // add c to the testWord and move
+                            // the returned big letter to bigLettersActive
+                            testWord += c.ToString();
+
+                            // move it from the inactive to active list
+                            bigLettersActive.Add(ltr);
+                            bigLetters.Remove(ltr);
+                            ltr.color = bigColorSelected;
+
+                            ArrangeBigLetters();
+                        }
+                    }
+
+                    if (c == '\b') // backspace
+                    {
+                        if (bigLettersActive.Count == 0)
+                            return;
+
+                        if (testWord.Length > 1)
+                            testWord = testWord.Substring(0, testWord.Length - 1);
+                        else
+                            testWord = string.Empty;
+
+                        ltr = bigLettersActive[bigLettersActive.Count - 1];
+                        // move it from the active to the inactive list
+                        bigLettersActive.Remove(ltr);
+                        bigLetters.Add(ltr);
+                        ltr.color = bigColorDim;
+
+                        ArrangeBigLetters();
+                    }
+
+                    if (c == '\n' || c == '\r')
+                    {
+                        CheckWord();
+                    }
+
+                    if (c == ' ')
+                    {
+                        bigLetters = ShuffleLetters(bigLetters);
+                        ArrangeBigLetters();
+                    }
+                }
+                break;
+        }
+    }
+    
+    // finds an available Letter with the char c in bigLetters
+    // if there isn't one available, it returns null
+    Letter FindNextLetterByChar(char c)
+    {
+        foreach(var ltr in bigLetters)
+        {
+            if (ltr.c == c)
+            {
+                return ltr;
+            }
+        }
+        return null;
+    }
+
+    public void CheckWord()
+    {
+        string subWord;
+        var foundTestWord = false;
+
+        // create a List<int> to hold the indicies of other subWords that are
+        // contained within testWord
+        var containedWords = new List<int>();
+
+        for (var i = 0; i < currLevel.subWords.Count; i++)
+        {
+            if (wyrds[i].found)
+                continue;
+
+            subWord = currLevel.subWords[i];
+
+            if(string.Equals(testWord, subWord))
+            {
+                HighlightWyrd(i);
+                foundTestWord = true;
+            }
+            else if (testWord.Contains(subWord))
+            {
+                containedWords.Add(i);
+            }
+        }
+
+        if (foundTestWord)
+        {
+            var numContained = containedWords.Count;
+            int ndx;
+            for (var i = 0; i < containedWords.Count; i++)
+            {
+                ndx = numContained - i - 1;
+                HighlightWyrd(containedWords[ndx]);
+            }
+        }
+
+        ClearBigLettersActive();
+    }
+
+    void HighlightWyrd(int ndx)
+    {
+        // activate sub word, lighten color, make text visible
+        wyrds[ndx].found = true;
+        wyrds[ndx].color = (wyrds[ndx].color + Color.white) / 2f;
+        wyrds[ndx].visible = true;
+    }
+
+    void ClearBigLettersActive()
+    {
+        testWord = string.Empty;
+        foreach(var ltr in bigLettersActive)
+        {
+            bigLetters.Add(ltr);
+            ltr.color = bigColorDim;
+        }
+        bigLettersActive.Clear();
+        ArrangeBigLetters();
     }
 
     public void WordListParseComplete()
