@@ -151,6 +151,7 @@ public class WordGame : MonoBehaviour
             if(string.Equals(testWord, subWord))
             {
                 HighlightWyrd(i);
+                ScoreManager.SCORE(wyrds[i], 1);
                 foundTestWord = true;
             }
             else if (testWord.Contains(subWord))
@@ -167,6 +168,7 @@ public class WordGame : MonoBehaviour
             {
                 ndx = numContained - i - 1;
                 HighlightWyrd(containedWords[ndx]);
+                ScoreManager.SCORE(wyrds[containedWords[ndx]], i + 2);
             }
         }
 
