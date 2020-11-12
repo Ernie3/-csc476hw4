@@ -62,3 +62,7 @@ crashlytics-build.properties
 thumbs.db
 
 /[Dd]ist/
+
+WebGL Builds/
+connectwebgl.zip
+webgl_sharing
