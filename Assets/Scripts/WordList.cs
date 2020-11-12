@@ -44,7 +44,6 @@ public class WordList : MonoBehaviour
     {
         lines = wordListText.text.Split('\n');
         totalLines = lines.Length;
-        StartCoroutine(ParseLines());
     }
 
     // Update is called once per frame

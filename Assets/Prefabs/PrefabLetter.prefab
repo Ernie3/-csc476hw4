@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5703263533900693431}
   - component: {fileID: 5703263533900693428}
   - component: {fileID: 5703263533900693429}
+  - component: {fileID: 7010643156945636375}
   m_Layer: 0
   m_Name: PrefabLetter
   m_TagString: Untagged
@@ -95,6 +96,21 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &7010643156945636375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5703263533900693434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aeae9bf6614af634f915d7c762fbdcd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tMesh: {fileID: 0}
+  tRend: {fileID: 0}
+  big: 0
 --- !u!1 &5703263534701860947
 GameObject:
   m_ObjectHideFlags: 0
@@ -179,7 +195,7 @@ TextMesh:
   m_CharacterSize: 0.25
   m_LineSpacing: 1
   m_Anchor: 4
-  m_Alignment: 0
+  m_Alignment: 1
   m_TabSize: 4
   m_FontSize: 36
   m_FontStyle: 1
