@@ -11,7 +11,8 @@ public enum GameMode
     loading, // word list is loading and being parse
     makeLevel, // individual WordLevel is being created
     levelPrep, // level visuals are instantiated
-    inLevel // level is in progress
+    inLevel, // level is in progress
+    gameOver
 }
 
 public class WordGame : MonoBehaviour
@@ -24,6 +25,7 @@ public class WordGame : MonoBehaviour
     public Text nextLevelText;
     public Text highScoreText;
     public Text timerText;
+    public Text gameOverText;
     public Rect wordArea = new Rect(-24, 19, 48, 28);
     public float letterSize = 1.5f;
     public bool showAllWyrds = true;
@@ -37,6 +39,8 @@ public class WordGame : MonoBehaviour
     public GameMode mode = GameMode.preGame;
     public WordLevel currLevel;
     public int levelNumber;
+    public float levelTime;
+    public float restartTime;
     public List<Wyrd> wyrds;
     public List<Letter> bigLetters;
     public List<Letter> bigLettersActive;
@@ -63,6 +67,7 @@ public class WordGame : MonoBehaviour
     {
         mode = GameMode.loading;
         WordList.INIT();
+        HideEndGame();
     }
 
     // Update is called once per frame
@@ -72,7 +77,27 @@ public class WordGame : MonoBehaviour
         char c;
         switch(mode)
         {
+            case GameMode.gameOver:
+                gameOverText.text = "Game Over!" + System.Environment.NewLine;
+                gameOverText.text += "Restarting in " + (int)restartTime;
+                restartTime -= Time.deltaTime;
+                break;
+
             case GameMode.inLevel:
+                levelTime -= Time.deltaTime;
+
+                if (levelTime <= 0)
+                {
+                    mode = GameMode.gameOver;
+                    ClearLevel();
+                    ShowEndGame();
+                }
+
+                var minutes = (int)levelTime / 60;
+                var seconds = (int)levelTime % 60;
+
+                timerText.text = minutes + ":" + (seconds == 0 ? "00" : seconds < 10 ? "0" + seconds : seconds.ToString());
+
                 foreach (var cIt in Input.inputString)
                 {
                     c = char.ToUpperInvariant(cIt);
@@ -232,6 +257,8 @@ public class WordGame : MonoBehaviour
 
     public WordLevel MakeWordLevel(int levelNum)
     {
+        levelTime = levelNum == 1 ? 120f : 80f;
+
         levelNumber = levelNum;
         levelText.text = "Level " + levelNum;
 
@@ -246,6 +273,11 @@ public class WordGame : MonoBehaviour
         StartCoroutine(FindSubWordsCoroutine(level));
 
         return level;
+    }
+
+    private WordLevel MakeWordLevel()
+    {
+        return MakeWordLevel(1);
     }
 
     public IEnumerator FindSubWordsCoroutine(WordLevel level)
@@ -411,6 +443,41 @@ public class WordGame : MonoBehaviour
         }
     }
 
+    public static void ShowHighScore()
+    {
+        if (PlayerPrefs.HasKey(WordGame.HighScorePointsKey) && PlayerPrefs.HasKey(WordGame.HighScoreRoundsKey))
+        {
+            WordGame.S.highScoreText.text = "Current High Score: " + System.Environment.NewLine;
+            WordGame.S.highScoreText.text += PlayerPrefs.GetInt(WordGame.HighScorePointsKey) + " points in " + PlayerPrefs.GetInt(WordGame.HighScoreRoundsKey) + " rounds";
+            WordGame.S.highScoreText.gameObject.SetActive(true);
+        }
+        else
+        {
+            WordGame.S.highScoreText.text = "No high score set yet!";
+            WordGame.S.highScoreText.gameObject.SetActive(true);
+        }
+    }
+
+    private void ShowHighScoreInternal()
+    {
+        if (PlayerPrefs.HasKey(WordGame.HighScorePointsKey) && PlayerPrefs.HasKey(WordGame.HighScoreRoundsKey))
+        {
+            highScoreText.text = "Current High Score: " + System.Environment.NewLine;
+            highScoreText.text += PlayerPrefs.GetInt(WordGame.HighScorePointsKey) + " points in " + PlayerPrefs.GetInt(WordGame.HighScoreRoundsKey) + " rounds";
+            highScoreText.gameObject.SetActive(true);
+        }
+        else
+        {
+            highScoreText.text = "No high score set yet!";
+            highScoreText.gameObject.SetActive(true);
+        }
+    }
+
+    private void HideHighScore()
+    {
+        highScoreText.gameObject.SetActive(false);
+    }
+
     private void ClearLevel()
     {
         goLetters.ForEach(go => Destroy(go));
@@ -427,5 +494,34 @@ public class WordGame : MonoBehaviour
     private void HideHighScoreText()
     {
         highScoreText.gameObject.SetActive(false);
+    }
+
+    private void ShowEndGame()
+    {
+        gameOverText.gameObject.SetActive(true);
+
+        if (PlayerPrefs.GetInt(HighScorePointsKey, int.MinValue) < Scoreboard.S.score)
+        {
+            PlayerPrefs.SetInt(HighScorePointsKey, Scoreboard.S.score);
+            PlayerPrefs.SetInt(HighScoreRoundsKey, levelNumber);
+        }
+
+        restartTime = 7f;
+        levelNumber = 0;
+        Invoke(nameof(HideEndGame), 7.5f);
+        Invoke(nameof(ShowHighScoreInternal), 7.5f);
+        Invoke(nameof(HideHighScore), 11.25f);
+        Invoke(nameof(MakeWordLevel), 11.5f);
+        Invoke(nameof(ResetScore), 11.5f);
+    }
+
+    private void HideEndGame()
+    {
+        gameOverText.gameObject.SetActive(false);
+    }
+
+    private void ResetScore()
+    {
+        Scoreboard.S.score = 0;
     }
 }
